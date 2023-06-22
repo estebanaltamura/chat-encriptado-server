@@ -25,6 +25,7 @@ wss.on('connection', function connection(ws) {
 
       if(users.hasOwnProperty(userName)){
         ws.send("usuario existente, cerrando conexion...")
+        // enviar un popup
         ws.close()
       }
       else{
@@ -50,17 +51,33 @@ wss.on('connection', function connection(ws) {
     
     if(messageParsed.hasOwnProperty("tryPairing")){      
       const user2 = messageParsed.tryPairing.publicKeyUser2      
+
+      if(userName === user2){
+        const requestMessage = JSON.stringify({"error": "errorUserIsTheSame"})
+        users[userName].connection.send(requestMessage)   
+      }
       
-      if(users.hasOwnProperty(messageParsed.tryPairing.publicKeyUser2) && messageParsed.tryPairing.publicKeyUser2 !== userName){
+      else if(!users.hasOwnProperty(user2)){        
+        console.log("user2", user2)
+        console.log("user1", userName)
+        const requestMessage = JSON.stringify({"error": "errorUserDoesntExistOrReject"})        
+        const timeOut = setTimeout(()=>{
+          users[userName].connection.send(requestMessage)
+          clearTimeout(timeOut)
+        },30000)        
+      }
+      
+      else if(users.hasOwnProperty(user2)){        
         const requestMessage = JSON.stringify({"requestConnection": {"userName": userName, "nickName": nickName}})
         users[user2].connection.send(requestMessage)        
-      }      
+      }          
     }    
     
+
     if(messageParsed.hasOwnProperty("confirmedRequest")){
       //Asignar el user de la contra parte en el TO
       const user1 = messageParsed.confirmedRequest.user1
-      const user2 = messageParsed.confirmedRequest.user2          
+      const user2 = messageParsed.confirmedRequest.user2                
       users[user1].to = user2
       users[user2].to = user1   
       const requestMessageUser1 = JSON.stringify({"chatConfirmed": {"to": user2}})
@@ -68,6 +85,13 @@ wss.on('connection', function connection(ws) {
       users[user1].connection.send(requestMessageUser1) 
       users[user2].connection.send(requestMessageUser2) 
     }
+
+    if(messageParsed.hasOwnProperty("rejectedRequest")){
+      const user1 = messageParsed.rejectedRequest.user1      
+      const requestMessageUser1 = JSON.stringify({"error": "errorUserDoesntExistOrReject"})
+      users[user1].connection.send(requestMessageUser1) 
+    }
+    
 
     
     if(messageParsed.hasOwnProperty("requestCloseConnection")){      
