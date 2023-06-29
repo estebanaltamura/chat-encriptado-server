@@ -4,7 +4,6 @@ const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: 8080 });
 
 const users = {}
-const pairs = []
 
 // Evento que se dispara cuando se establece una conexión WebSocket
 wss.on('connection', function connection(ws) {
@@ -16,7 +15,10 @@ wss.on('connection', function connection(ws) {
   console.log("conexion establecida entre cliente servidor")
   
   ws.on('message', function incoming(message) {
+    
     const messageParsed = JSON.parse(message)
+
+    //console.log("mensaje recibido", messageParsed)
 
     //peticion de creacion de usuario
     if(messageParsed.hasOwnProperty("createUserData")){
@@ -24,8 +26,7 @@ wss.on('connection', function connection(ws) {
       nickName = messageParsed.createUserData.nickName
 
       if(users.hasOwnProperty(userName)){
-        ws.send("usuario existente, cerrando conexion...")
-        // enviar un popup
+        ws.send("usuario existente, cerrando conexion...")        
         ws.close()
       }
       else{
@@ -37,80 +38,106 @@ wss.on('connection', function connection(ws) {
         console.log("users actualizado: ", users)
       }
     } 
-    
-    
-
-    //busqueda de par
-
-    //dejar en el servidor el control del to para evitar la posibilidad de hackeo a las puntas
-
-    //si es este tipo de request, si esta dentro de los usuarios online y si no es el mismo usuario generar un alert en el otro, 
-    //si confirma se guardan en el front los to y se abre la pantalla de chat
-    
-    
+        
     
     if(messageParsed.hasOwnProperty("tryPairing")){      
       const user2 = messageParsed.tryPairing.publicKeyUser2      
 
       if(userName === user2){
         const requestMessage = JSON.stringify({"error": "errorUserIsTheSame"})
-        users[userName].connection.send(requestMessage)   
+        users[userName] !== undefined && users[userName].connection.send(requestMessage)   
       }
       
-      else if(!users.hasOwnProperty(user2)){        
-        console.log("user2", user2)
-        console.log("user1", userName)
-        const requestMessage = JSON.stringify({"error": "errorUserDoesntExistOrReject"})        
-        const timeOut = setTimeout(()=>{
-          users[userName].connection.send(requestMessage)
-          clearTimeout(timeOut)
-        },30000)        
-      }
+      // else if(!users.hasOwnProperty(user2)){        
+      //   const requestMessage = JSON.stringify({"error": "errorUserDoesntExistOrReject"})        
+        
+      //   const timeOut = setTimeout(()=>{
+      //     users[userName] !== undefined && users[userName].connection.send(requestMessage)
+      //     clearTimeout(timeOut)
+      //   },30000)        
+      // }
       
       else if(users.hasOwnProperty(user2)){        
         const requestMessage = JSON.stringify({"requestConnection": {"userName": userName, "nickName": nickName}})
-        users[user2].connection.send(requestMessage)        
+        users[userName].requestStatus = "requestSent"
+        users[user2].requestStatus    = "requestReceived"
+        users[user2].connection.send(requestMessage) 
+        console.log("solicitud enviada", users)        
       }          
     }    
     
 
-    if(messageParsed.hasOwnProperty("confirmedRequest")){
-      //Asignar el user de la contra parte en el TO
-      const user1 = messageParsed.confirmedRequest.user1
-      const user2 = messageParsed.confirmedRequest.user2                
-      users[user1].to = user2
-      users[user2].to = user1   
-      const requestMessageUser1 = JSON.stringify({"chatConfirmed": {"to": user2}})
-      const requestMessageUser2 = JSON.stringify({"chatConfirmed": {"to": user1}})
-      users[user1].connection.send(requestMessageUser1) 
-      users[user2].connection.send(requestMessageUser2) 
+    if(messageParsed.hasOwnProperty("cancelRequestSent")){
+      const user1 = messageParsed.cancelRequestSent.user1
+      const user2 = messageParsed.cancelRequestSent.user2
+
+      console.log(user1, user2)
+      users[user1].requestStatus = null
+      
+      if(users[user2]?.requestStatus !== undefined){
+        users[user2].requestStatus = null
+        users[user2].connection.send(JSON.stringify({"error":"canceledRequest"}))
+      } 
+      
+      console.log("solicitud cancelada", users[user1]?.requestStatus, users[user2]?.requestStatus)  
     }
+
+
+
+    if(messageParsed.hasOwnProperty("confirmedRequest")){
+
+      //Aca agrega que se ejecute el codigo si el otro tiene requestStatus "requestSent"           
+      const user1 = messageParsed.confirmedRequest.user1
+      const user2 = messageParsed.confirmedRequest.user2
+      
+      if(users[user1] !== undefined){
+        
+        if(users[user1].requestStatus === "requestSent" && users[user2].requestStatus === "requestReceived"){
+          users[user1].requestStatus = null
+          users[user2].requestStatus = null             
+          
+          users[user1].to = user2
+          users[user2].to = user1         
+          
+          const requestMessageUser1 = JSON.stringify({"chatConfirmed": {"to": user2, "toNickName": users[user2].nickName}})
+          const requestMessageUser2 = JSON.stringify({"chatConfirmed": {"to": user1, "toNickName": users[user1].nickName}})
+          users[user1].connection.send(requestMessageUser1) 
+          users[user2].connection.send(requestMessageUser2) 
+          
+          console.log("solicitud confirmada", users[user1]?.requestStatus, users[user2]?.requestStatus)   
+        }      
+      }  
+
+      else{
+        const requesterIsOfflineMessage = JSON.stringify({"error": "requesterIsOffline"})
+        users[user2].connection.send(requesterIsOfflineMessage) 
+        console.log("requester is offline", users[user1]?.requestStatus, users[user2]?.requestStatus)  
+      }    
+    }
+
 
     if(messageParsed.hasOwnProperty("rejectedRequest")){
-      const user1 = messageParsed.rejectedRequest.user1      
-      const requestMessageUser1 = JSON.stringify({"error": "errorUserDoesntExistOrReject"})
-      users[user1].connection.send(requestMessageUser1) 
-    }
-    
-
-    
-    if(messageParsed.hasOwnProperty("requestCloseConnection")){      
-      const user2 = messageParsed.requestCloseConnection.publicKeyUser2          
-      users[user2].connection.close()      
-    }   
-
-    
-
-
-
-    //enviar mensaje al par
-    //si el from del otro es el to del que manda, mandar
-    if(messageParsed.hasOwnProperty("regularMessage")){
-      const {from, to, message} = messageParsed.regularMessage
-
-      users[to].connection.send(message)
-      console.log("mensaje enviado de: ", from, "a: ", to, "mensaje: ", message)
+      const user1 = messageParsed.rejectedRequest.user1
+      const user2 = messageParsed.rejectedRequest.user2
       
+      users[user2].requestStatus = null    
+         
+      
+      
+      if(users[user1] !== undefined){
+        users[user1].requestStatus = null
+        const requestMessageUser = JSON.stringify({"error": "errorUserDoesntExistOrReject"})
+        users[user1].connection.send(requestMessageUser) 
+      }          
+
+      console.log("solicitud rechazada", users[user1]?.requestStatus, users[user2]?.requestStatus) 
+    }
+
+ 
+    if(messageParsed.hasOwnProperty("sendMessage")){
+      const {from, to, message} = messageParsed.sendMessage      
+      const messageToSend = JSON.stringify({"sentMessaje": {"from": from, "to": to, "message": message} })
+      users[to].connection.send(messageToSend)        
     }
        
   });
@@ -118,11 +145,14 @@ wss.on('connection', function connection(ws) {
   // Evento que se dispara cuando se cierra la conexión WebSocket
   ws.on('close', function close() {
     
-    //en etapa de chat si uno cierra el otro recibe un mensaje interno y se cierra forzadamente
-       
-    delete users[userName]
-
-    console.log("users actualizado", users)
-    //console.log('Conexión cerrada', "publicKey: ", userName, "nick name: ", nickName);
+    // si existe el usuario lo borra
+    const userToDelete = users[userName]
+    
+    if(userToDelete !== undefined){
+      delete users[userName]
+      console.log("usuario borrado", userName)    
+      const toPropertyOfUserToDelete = userToDelete.to 
+      users[toPropertyOfUserToDelete]?.connection.send(JSON.stringify({"closing": "otherUserHasClosed"}))      
+    } 
   });
 });
