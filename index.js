@@ -10,6 +10,7 @@ const server = http.createServer((req, res) => {
   if (url === '/api/saludo' && method === 'GET') {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
     res.end('¡Hola, mundo!');
+    return
   }
 
   // Endpoint '/api/usuario' con método POST
