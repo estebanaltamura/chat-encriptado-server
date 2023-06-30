@@ -143,8 +143,8 @@ wss.on('connection', function connection(ws) {
   });
 
   // Evento que se dispara cuando se cierra la conexión WebSocket
-  ws.on('close', function close() {
-    
+  ws.on('close', function close(e) {
+    console.log(e)
     // si existe el usuario lo borra
     const userToDelete = users[userName]
     
