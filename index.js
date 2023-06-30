@@ -1,4 +1,6 @@
-const WebSocket = require('ws');
+
+
+const http = require('http');
 
 const server = http.createServer((req, res) => {
   // Obtener la URL y el método de la solicitud
@@ -42,7 +44,7 @@ server.listen(3000, () => {
 
 
 
-
+// const WebSocket = require('ws');
 
 // // Crea un nuevo servidor WebSocket en el puerto deseado
 // const wss = new WebSocket.Server({ port: 3000 });
