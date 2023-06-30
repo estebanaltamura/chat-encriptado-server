@@ -155,4 +155,9 @@ wss.on('connection', function connection(ws) {
       users[toPropertyOfUserToDelete]?.connection.send(JSON.stringify({"closing": "otherUserHasClosed"}))      
     } 
   });
+
+  ws.on('error', function error(e) {
+    
+    console.log(e)
+  });
 });
