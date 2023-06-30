@@ -4,6 +4,7 @@ const WebSocket = require('ws');
 const wss = new WebSocket.Server({ port: 3000 });
 
 const users = {}
+console.log(users)
 
 // Evento que se dispara cuando se establece una conexión WebSocket
 wss.on('connection', function connection(ws) {
