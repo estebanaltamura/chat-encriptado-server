@@ -1,12 +1,12 @@
 const WebSocket = require('ws');
 
 // Crea un nuevo servidor WebSocket en el puerto deseado
-const ws = new WebSocket.Server({ port: 3000 });
+const wss = new WebSocket.Server({ port: 3000 });
 
 const users = {}
 
 // Evento que se dispara cuando se establece una conexión WebSocket
-ws.on('connection', function connection(ws) {
+wss.on('connection', function connection(ws) {
 
   let userName = null
   let nickName = null
