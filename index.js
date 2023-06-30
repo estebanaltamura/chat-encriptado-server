@@ -6,7 +6,7 @@ const wss = new WebSocket.Server({ port: 3000 });
 const users = {}
 
 // Evento que se dispara cuando se establece una conexión WebSocket
-wss.on('connection', function connection(ws) {
+ws.on('connection', function connection(ws) {
 
   let userName = null
   let nickName = null
