@@ -1,10 +1,10 @@
 const WebSocket = require('ws');
 
 // Crea un nuevo servidor WebSocket en el puerto deseado
-const wss = new WebSocket.Server({ port: 3000 });
+const wss = new WebSocket.Server({ port: 4000 });
 
 const users = {}
-console.log(users)
+
 
 // Evento que se dispara cuando se establece una conexión WebSocket
 wss.on('connection', function connection(ws) {
@@ -22,7 +22,7 @@ wss.on('connection', function connection(ws) {
     //console.log("mensaje recibido", messageParsed)
 
     //peticion de creacion de usuario
-    if(messageParsed.hasOwnProperty("createUserData")){
+    if(messageParsed.hasOwnProperty("createUserData")){      
       userName = messageParsed.createUserData.publicKey 
       nickName = messageParsed.createUserData.nickName
 
@@ -35,7 +35,7 @@ wss.on('connection', function connection(ws) {
         const {publicKey, ...rest} = messageParsed.createUserData
         users[userName] = rest
 
-        ws.send(JSON.stringify({"userCreated": "userCreated"}))        
+        ws.send(JSON.stringify({"userCreated": {"userName": messageParsed.createUserData.publicKey, "nickName": messageParsed.createUserData.nickName}}))        
         console.log("users actualizado: ", users)
       }
     } 
@@ -68,7 +68,8 @@ wss.on('connection', function connection(ws) {
     }    
     
 
-    if(messageParsed.hasOwnProperty("cancelRequestSent")){
+    if(messageParsed.hasOwnProperty("cancelRequestSent")){   
+      console.log("mensaje post cierre")   
       const user1 = messageParsed.cancelRequestSent.user1
       const user2 = messageParsed.cancelRequestSent.user2
 
