@@ -1,8 +1,8 @@
 const WebSocket = require('ws');
 
 // Crea un nuevo servidor WebSocket en el puerto deseado
-const wss = new WebSocket.Server({ port: 4000 });
-console.log("escuchando en puerto 4000")
+const wss = new WebSocket.Server({ port: 3000 });
+console.log("escuchando en puerto 3000")
 const users = {}
 
 
