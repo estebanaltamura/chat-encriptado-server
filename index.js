@@ -58,33 +58,36 @@ wss.on('connection', function connection(ws) {
       //   },30000)        
       // }
       
-      else if(users.hasOwnProperty(user2)){        
+      else if(users.hasOwnProperty(user2)){           
         const requestMessage = JSON.stringify({"requestConnection": {"userName": userName, "nickName": nickName}})
         users[userName].requestStatus = "requestSent"
         users[user2].requestStatus    = "requestReceived"
+        users[userName].to            = user2
+        users[user2].to               = userName
+
+
         users[user2].connection.send(requestMessage) 
         console.log("solicitud enviada", users)        
       }          
     }    
     
 
-    if(messageParsed.hasOwnProperty("cancelRequestSent")){   
-      console.log("mensaje post cierre")   
+    if(messageParsed.hasOwnProperty("cancelRequestSent")){       
       const user1 = messageParsed.cancelRequestSent.user1
       const user2 = messageParsed.cancelRequestSent.user2
 
       console.log(user1, user2)
       users[user1].requestStatus = null
+      users[user1].to = null
       
       if(users[user2]?.requestStatus !== undefined){
         users[user2].requestStatus = null
+        users[user2].to = null
         users[user2].connection.send(JSON.stringify({"error":"canceledRequest"}))
       } 
       
       console.log("solicitud cancelada", users[user1]?.requestStatus, users[user2]?.requestStatus)  
     }
-
-
 
     if(messageParsed.hasOwnProperty("confirmedRequest")){
 
@@ -95,8 +98,8 @@ wss.on('connection', function connection(ws) {
       if(users[user1] !== undefined){
         
         if(users[user1].requestStatus === "requestSent" && users[user2].requestStatus === "requestReceived"){
-          users[user1].requestStatus = null
-          users[user2].requestStatus = null             
+          users[user1].requestStatus = "chating"
+          users[user2].requestStatus = "chating"             
           
           users[user1].to = user2
           users[user2].to = user1         
@@ -108,26 +111,19 @@ wss.on('connection', function connection(ws) {
           
           console.log("solicitud confirmada", users[user1]?.requestStatus, users[user2]?.requestStatus)   
         }      
-      }  
-
-      else{
-        const requesterIsOfflineMessage = JSON.stringify({"error": "requesterIsOffline"})
-        users[user2].connection.send(requesterIsOfflineMessage) 
-        console.log("requester is offline", users[user1]?.requestStatus, users[user2]?.requestStatus)  
-      }    
+      }        
     }
-
 
     if(messageParsed.hasOwnProperty("rejectedRequest")){
       const user1 = messageParsed.rejectedRequest.user1
       const user2 = messageParsed.rejectedRequest.user2
       
-      users[user2].requestStatus = null    
-         
-      
+      users[user2].requestStatus = null   
+      users[user2].to = null  
       
       if(users[user1] !== undefined){
         users[user1].requestStatus = null
+        users[user1].to = null  
         const requestMessageUser = JSON.stringify({"error": "errorUserDoesntExistOrReject"})
         users[user1].connection.send(requestMessageUser) 
       }          
@@ -145,21 +141,36 @@ wss.on('connection', function connection(ws) {
   });
 
   // Evento que se dispara cuando se cierra la conexión WebSocket
-  ws.on('close', function close(e) {
-    console.log(e)
-    // si existe el usuario lo borra
-    const userToDelete = users[userName]
-    
-    if(userToDelete !== undefined){
-      delete users[userName]
-      console.log("usuario borrado", userName)    
-      const toPropertyOfUserToDelete = userToDelete.to 
-      users[toPropertyOfUserToDelete]?.connection.send(JSON.stringify({"closing": "otherUserHasClosed"}))      
-    } 
+  ws.on('close', function close(e) {   
+
+    const userDisconnected = users[userName]    
+    delete users[userName]    
+
+    if(userDisconnected.requestStatus === "requestReceived"){      
+      if(users[userDisconnected.to] !== undefined){
+          users[userDisconnected.to].to = null 
+          users[userDisconnected.to].requestStatus = null 
+      }     
+    }
+
+    if(userDisconnected.requestStatus === "requestSent"){       
+      if(users[userDisconnected.to] !== undefined){       
+        users[userDisconnected.to].connection.send(JSON.stringify({"error":"canceledRequest"})) 
+        users[userDisconnected.to].to = null
+        users[userDisconnected.to].requestStatus = null 
+      }       
+    }
+
+    if(userDisconnected.requestStatus === "chating"){
+      if(users[userDisconnected.to] !== undefined){
+        users[userDisconnected.to].connection.send(JSON.stringify({"closing": "otherUserHasClosed"}))  
+        users[userDisconnected.to].to = null
+        users[userDisconnected.to].requestStatus = null     
+      }
+    }   
   });
 
-  ws.on('error', function error(e) {
-    
+  ws.on('error', function error(e) {    
     console.log(e)
   });
 });
