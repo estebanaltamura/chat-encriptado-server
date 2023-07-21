@@ -9,6 +9,11 @@ const options = {
   cert: fs.readFileSync('/etc/cert/cert.pem')
 };
 
+https.createServer(options, (req, res) => {
+  res.writeHead(200);
+  res.end('¡Hola, mundo!\n');
+}).listen(443);
+
 const server = https.createServer(options);
 
 const wss = new WebSocket.Server({ server });
