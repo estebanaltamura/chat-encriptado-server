@@ -1,8 +1,18 @@
 const WebSocket = require('ws');
+const fs = require('fs');
+const https = require('https');
 
 // Crea un nuevo servidor WebSocket en el puerto deseado
-const wss = new WebSocket.Server({ port: 3000 });
-console.log("escuchando en puerto 3000")
+
+const options = {
+  key: fs.readFileSync('/etc/letsencrypted/live/encrypted-chat-backend.online/privkey.pem'),
+  cert: fs.readFileSync('/etc/letsencrypted/live/encrypted-chat-backend.online/cert.pem')
+};
+
+const server = https.createServer(options);
+
+const wss = new WebSocket.Server({ server });
+console.log("escuchando en puerto 4000")
 const users = {}
 
 
@@ -16,7 +26,19 @@ wss.on('connection', function connection(ws) {
   console.log("conexion establecida entre cliente servidor")
   
   ws.on('message', function incoming(message) {
-    
+    //encontrar forma de que solo las aplicaciones 
+
+    // gestionar que no pueda pedir conexion a alguien que esta en requestStatus de chating
+
+    // async def websocket_handler(websocket, path):
+    // # Verificar el encabezado Origin
+    // origin = websocket.request_headers.get('Origin')
+    // allowed_origin = 'https://example.com'  # Dominio permitido
+
+    // if origin != allowed_origin:
+    //     # Rechazar la conexión
+    //     await websocket.close()
+    //     return
     const messageParsed = JSON.parse(message)
 
     //console.log("mensaje recibido", messageParsed)
@@ -173,4 +195,10 @@ wss.on('connection', function connection(ws) {
   ws.on('error', function error(e) {    
     console.log(e)
   });
+});
+
+const PORT = 4000;
+
+server.listen(PORT, () => {
+  console.log(`Servidor WebSocket seguro escuchando en el puerto ${PORT}`);
 });
