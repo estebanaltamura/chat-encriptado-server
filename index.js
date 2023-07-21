@@ -5,8 +5,8 @@ const https = require('https');
 // Crea un nuevo servidor WebSocket en el puerto deseado
 
 const options = {
-  key: fs.readFileSync('/etc/privkey.pem'),
-  cert: fs.readFileSync('/etc/cert.pem')
+  key: fs.readFileSync('/etc/cert/privkey.pem'),
+  cert: fs.readFileSync('/etc/cert/cert.pem')
 };
 
 const server = https.createServer(options);
