@@ -5,8 +5,8 @@ const https = require('https');
 // Crea un nuevo servidor WebSocket en el puerto deseado
 
 const options = {
-  key: fs.readFileSync('etc/letsencrypted/live/encrypted-chat-backend.online/privkey.pem'),
-  cert: fs.readFileSync('etc/letsencrypted/live/encrypted-chat-backend.online/cert.pem')
+  key: fs.readFileSync('/etc/letsencrypt/live/encrypted-chat-backend.online/privkey.pem'),
+  cert: fs.readFileSync('/etc/letsencrypt/live/encrypted-chat-backend.online/cert.pem')
 };
 
 const server = https.createServer(options);
