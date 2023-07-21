@@ -9,15 +9,14 @@ const options = {
   cert: fs.readFileSync('/etc/letsencrypt/live/encrypted-chat-backend.online/cert.pem')
 };
 
-https.createServer(options, (req, res) => {
-  res.writeHead(200);
-  res.end('¡Hola, mundo!\n');
-}).listen(4000);
-
 const server = https.createServer(options);
 
-const wss = new WebSocket.Server({ server });
-console.log("escuchando en puerto 3000")
+
+export const encryptedChatServer = ()=>{
+  const wss = new WebSocket.Server({ server });
+  console.log("escuchando en puerto 3000")
+}
+
 const users = {}
 
 
