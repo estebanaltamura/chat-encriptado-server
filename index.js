@@ -11,11 +11,8 @@ const options = {
 
 const server = https.createServer(options);
 
-
-export const encryptedChatServer = ()=>{
-  const wss = new WebSocket.Server({ server });
-  console.log("escuchando en puerto 3000")
-}
+const wss = new WebSocket.Server({ server });
+console.log("escuchando en puerto 3000")
 
 const users = {}
 
