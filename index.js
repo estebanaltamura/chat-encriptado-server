@@ -12,7 +12,7 @@ const options = {
 const server = https.createServer(options);
 
 const wss = new WebSocket.Server({ server });
-console.log("escuchando en puerto 4000")
+console.log("escuchando en puerto 3000")
 const users = {}
 
 
@@ -197,7 +197,7 @@ wss.on('connection', function connection(ws) {
   });
 });
 
-const PORT = 4000;
+const PORT = 3000;
 
 server.listen(PORT, () => {
   console.log(`Servidor WebSocket seguro escuchando en el puerto ${PORT}`);
