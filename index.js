@@ -6,7 +6,7 @@ const https = require('https');
 
 const options = {
   key: fs.readFileSync('/etc/cert/privkey.pem'),
-  cert: fs.readFileSync('/etc/cert/cert.pem')
+  cert: fs.readFileSync('/etc/cert/fullchain.pem')
 };
 
 const server = https.createServer(options);
