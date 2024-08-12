@@ -22,6 +22,7 @@ wss.on('connection', function connection(ws) {
 
   let userName = null
   let nickName = null
+  let avatarType = null
 
   // Evento que se dispara cuando se recibe un mensaje del cliente
   console.log("conexion establecida entre cliente servidor")
@@ -48,6 +49,7 @@ wss.on('connection', function connection(ws) {
     if(messageParsed.hasOwnProperty("createUserData")){      
       userName = messageParsed.createUserData.publicKey 
       nickName = messageParsed.createUserData.nickName
+      avatarType = messageParsed.createUserData.avatarType
 
       if(users.hasOwnProperty(userName)){
         ws.send("usuario existente, cerrando conexion...")        
@@ -58,7 +60,7 @@ wss.on('connection', function connection(ws) {
         const {publicKey, ...rest} = messageParsed.createUserData
         users[userName] = rest
 
-        ws.send(JSON.stringify({"userCreated": {"userName": messageParsed.createUserData.publicKey, "nickName": messageParsed.createUserData.nickName}}))        
+        ws.send(JSON.stringify({"userCreated": {"userName": messageParsed.createUserData.publicKey, "nickName": messageParsed.createUserData.nickName, "avatarType": messageParsed.createUserData.avatarType}}))        
         console.log("users actualizado: ", users)
       }
     } 
@@ -82,7 +84,7 @@ wss.on('connection', function connection(ws) {
       // }
       
       else if(users.hasOwnProperty(user2)){           
-        const requestMessage = JSON.stringify({"requestConnection": {"userName": userName, "nickName": nickName}})
+        const requestMessage = JSON.stringify({"requestConnection": {"userName": userName, "nickName": nickName, "avatarType": avatarType}})
         users[userName].requestStatus = "requestSent"
         users[user2].requestStatus    = "requestReceived"
         users[userName].to            = user2
@@ -127,8 +129,8 @@ wss.on('connection', function connection(ws) {
           users[user1].to = user2
           users[user2].to = user1         
           
-          const requestMessageUser1 = JSON.stringify({"chatConfirmed": {"to": user2, "toNickName": users[user2].nickName}})
-          const requestMessageUser2 = JSON.stringify({"chatConfirmed": {"to": user1, "toNickName": users[user1].nickName}})
+          const requestMessageUser1 = JSON.stringify({"chatConfirmed": {"to": user2, "toNickName": users[user2].nickName, "avatarType": users[user2].avatarType}})
+          const requestMessageUser2 = JSON.stringify({"chatConfirmed": {"to": user1, "toNickName": users[user1].nickName, "avatarType": users[user1].avatarType}})
           users[user1].connection.send(requestMessageUser1) 
           users[user2].connection.send(requestMessageUser2) 
           
